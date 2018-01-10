@@ -1,0 +1,33 @@
+sudo: required
+services: docker
+env:
+  APP_NAME: NUI-Single
+before_install:
+  - docker run -tdi --name tizenstudio --init -v ${PWD}:/home/developer/workspace dhsshine/tizen-studio:2.1-dotnet
+script:
+  - docker exec -it tizenstudio package-manager-cli.bin install MOBILE-4.0
+  - docker exec -it tizenstudio package-manager-cli.bin show-pkgs
+  - docker exec -it tizenstudio tizen build-cs -- ./workspace -C Debug
+after_success:
+  - export ARTIFACT_ID="$APP_NAME-$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)"
+before_deploy:
+  - git config --local user.name "Donghoon Shin"
+  - git config --local user.email "dhs.shine@gmail.com"
+  - git tag -f $ARTIFACT_ID
+deploy:
+  - provider: s3
+    region: ap-northeast-2
+    access_key_id:
+      secure: "Tn2hl8aV2rYHSAuy/HIFeQOeMUYwmgHlxOd6igvXtyUbKzMorJ6jZh8dzDqddgUInIY/pXoiAzVNWu9ISUPCEZUFhQ1DThGYYWrm1KjDXX+8C3K9tKI+XnL2nkHCvTT2V8/V72R92tSvoFtdZAlDhDZgMY8pER84sWr2ZtwB5GCO+HwcEqsHpuOufWqwiQme6gtz+uLL5lHhMqd0EKCYW7ij+2f4gsXJCxOq34uTw6THu2nFK/ntcdT1WEvNby8hjehZJXdWp4nT8RHdBsngmiqsqzlnMJk1nf2Z73DFs3r2r2yJFsF55yMnLzyPKrwz5fUAqFa0HE8lIDnYnmEiOfxp783IOgH8bymnFNEkOO5qmjuMt/XpWgPrbkwXt85JkFAYVfstnlkETX8GklELgWtgyMiGpDJxUml4q77BdnSjrW9qfkIkSMOV6AhzjFVS3Eo+WeXKBjdEaEOeX+C8G/u9QfrMv7+7UoCWNf4yErxHqv/hpIgrPP+xu1NuyKis/Vv3A7DHFFr4nYWUrV/AwwzO0jCKoc9aE5PjH7VsWzh5bCRCC044GUQWk/LpQzkZdRSgSQNUw5IuprNmwLmVqL87OD8Rnponq08T90TU9osIw0Oy5ItjFktuj+gWZ1xl9UNJkj5fhIG4a1+icWYZhfdWrohkvO3INqot9BiqyCc="
+    secret_access_key:
+      secure: "mJwGn54CZOc3Y4soymu4CEVd4qcZAHhiaDR5jBzEGVGe8DSoyMX5uDInDr+WVn+wL1Vp983r9S4TJ1PY6uAIZ+/4LVnAcCVU/jzT/U2TZ33f5ZNiKA3rF9zrcPV5fawqe32FcoZ0+utCBvuCYS/1j2fuNQ0/mjwFNFTntUBYOwch3pYBWwjvHl8nvj3Y+lNRL2Nrwy1QSdORxcKdYuNMa/H2sKDQLDSSRbZMBRij2SPlmDSqWywwx4qx2gwJ8DIUJxtgmuS2Q3i1/yfUeCM/dru+CRHND82X4LC8741eIJbZPZcvnS7JfplPUrlWwYkunrU0UvjK+TrV2pdYxtYjmf4MlcmIKK85uzJvTBAJajCdPFvfRMTTASBDeazyzBF9pCSwh8qIqjpdi6v/G7ZQzuJPsmFvsIuqHJUBErE2bb+IWzyQcyjnN2eAz/I8K82opwzZxOMhAS3CZasbpIjExn7DRGboylM6Ar2wu46vs2A0coT2i3rsZskq/+v85Jt/z50RBsh4JUmDJy+JUU5cCHgo0JCvq/EQ3BBhXFRwDHTrekKtsz/uGucgwTnt35bJotzsYj3VMB2ggkVafaEr9AAxp/TnFHq4rwi2fFnGSjY0D2X90pqeyaMERbZBGrbgvoh7RRCnpxF5t4Arb1t5hLhE6W3LkkxCNks9YmxG+MA="
+    bucket: mde-update-bucket
+    local_dir: "$APP_NAME/bin/Debug"
+    skip_cleanup: true
+    upload-dir: "$ARTIFACT_ID"
+  - provider: releases
+    api_key:
+      secure: "mooOSIQ7pY6LjSbdk9iRS5YPcyB3E0/Rn6sp5Ab8q4AkjdouANdSiLM4P948hqxEzRheY0dPJyG1/kToTcdPl1knOwAZpvpezc2drg1OT3nicXdvQfhl7NwjnQHeD+kvvhA4UQpLzTF7ruZgrV2WvhpyRxBEgOa4IzGXia7FjoTcJnxxMEElsyUK2RwtN8ZGDzWZJL1LsMWiqD1beUKdAvIYDLJ0QpTlSX0cwwY+3Bn4GTzwhAtzLhXhtbtzmCJgH+UvmkQjmWSbo6pfVYCkpATPmYc/uCqWkW+XltIgDl39tDUDR48lzijSmATlXqN1hQqWq+NQRttrbu8UpnkDFxINpNCCDiVWCWT/m54yx9rpUBe+QYyKkyjS4vaSHFoNAT0X9azgDlIX7or+Lbf1BxNLI4lAX8mfVfUzBvBHrjjhBcrOIWO5iWILkz1zjRKyYflbnpbd7pYUd31VdWdtIRFGVNoJ3Ajx9musB71BLd5eZVa/ztN0UHclak14ouYXmLW3UXGZkmM+xghSK6A0hbBwpv3KLsP31VZjZnDkYafwBoeWlWVel6Y4VpitsPkae6x5W5HobimRJPcc1kjgPBl+wvsSkTWDdGdaeW731w+Cd9smvaSzgmxucFaqFqalrlG7G8Hi8+x4vXMEwgfDDFi96smn8xzL3R9mNczhGY0="
+    skip_cleanup: true
+    file: "$APP_NAME/bin/Debug/netcoreapp2.0/*.tpk"
+    file_glob: true
