@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" api-version="4" package="org.tizen.example.NUISingle" version="1.0.0">
+  <profile name="common" />
+  <ui-application appid="org.tizen.example.NUISingle"
+					exec="NUISingle.dll"
+					type="dotnet"
+					multiple="false"
+					taskmanage="true"
+					nodisplay="false"
+					launch_mode="single">
+    <label>NUISingle</label>
+    <icon>NUISingle.png</icon>
+  </ui-application>
+</manifest>
